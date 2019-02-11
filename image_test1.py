@@ -16,9 +16,7 @@ def exec_gamma_correction(img ):
 
 def exec_norm_rgb(img1):
     zeros = np.zeros((height, width), img1.dtype)
-
     img_blue_c1, img_green_c1, img_red_c1 = cv2.split(img1)
-
     img_blue_c3 = cv2.merge((img_blue_c1, zeros, zeros))
     img_green_c3 = cv2.merge((zeros, img_green_c1, zeros))
     img_red_c3 = cv2.merge((zeros, zeros, img_red_c1))
@@ -29,24 +27,25 @@ def exec_norm_rgb(img1):
     return img_blue_c3, img_green_c3, img_red_c3, img2
 
 def normalize(img):
-    a = (img - np.mean(img))/np.std(img)*16+32
-    print (a)
-    #return np.array(a, dtype='int8')
-    b = a.astype(dtype='uint8')
-    print (b)
-    return b
+    a = (img - np.mean(img))/np.std(img) * 16 + 32
+    return a.astype(dtype='uint8')
 
-def plot_hist(img):
+def plot_hist_rgb(img):
     color = ('b','g','r')
     for i,col in enumerate(color):
         histr = cv2.calcHist(img,[i],None,[256],[0,256])
         plt.plot(histr, color = col)
         plt.xlim([0,256])
 
+def plot_hist(img):
+    plt.hist(img.ravel(),256,[0,256]);
 
 plt.figure(figsize=(10,10))
 
-img1 = cv2.imread('C:\\aaa\\cat.png')
+file_name = 'C:\\aaa\\ccc.jpg'
+
+img1 = cv2.imread(file_name)
+img_gray = cv2.imread(file_name, 0)
 
 print (img1.dtype)
 
@@ -54,42 +53,76 @@ if len(img1.shape) == 3:
     height, width, channels = img1.shape[:3]
 
 #一行目
-plt.subplot(2, 2, 1)
+plt.subplot(3, 3, 1)
 plt.imshow(cv2.cvtColor(img1, cv2.COLOR_BGR2RGB))
 
 img1_blue_c3, img1_green_c3, img1_red_c3 , img1_norm = exec_norm_rgb(img1)
-plt.subplot(2, 2, 2)
+plt.subplot(3, 3, 2)
 plt.imshow(img1_norm)
 
 #2行目
 img2 = exec_gamma_correction(img1)
-plt.subplot(2, 2, 3)
+plt.subplot(3, 3, 4)
 plt.imshow(cv2.cvtColor(img2, cv2.COLOR_BGR2RGB))
 
 img2_blue_c3, img2_green_c3, img2_red_c3 , img2_norm = exec_norm_rgb(img2)
 
-plt.subplot(2, 2, 4)
+plt.subplot(3, 3, 5)
 plt.imshow(img2_norm)
+
+#3行目
+plt.subplot(3, 3, 7)
+plt.imshow(cv2.cvtColor(img_gray, cv2.COLOR_BGR2RGB))
+
+plt.subplot(3, 3, 8)
+equ = cv2.equalizeHist(img_gray)
+plt.imshow(cv2.cvtColor(equ, cv2.COLOR_BGR2RGB))
+
+plt.subplot(3, 3, 9)
+clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+cl1 = clahe.apply(img_gray)
+plt.imshow(cv2.cvtColor(cl1, cv2.COLOR_BGR2RGB))
 
 plt.show()
 
+
+#ヒストグラム表示2
+plt.figure(figsize=(10,10))
+
+plt.subplot(1, 3, 1)
+plot_hist(img_gray)
+
+plt.subplot(1, 3, 2)
+plot_hist(equ)
+
+plt.subplot(1, 3, 3)
+plot_hist(cl1)
+
+plt.show()
+
+
+#ヒストグラム表示2
 plt.figure(figsize=(10,10))
 
 plt.subplot(2, 2, 1)
-plot_hist(img1)
+plot_hist_rgb(img1)
 
 plt.subplot(2, 2, 2)
-plot_hist(img2)
+plot_hist_rgb(img2)
 
 
 #print(img1_norm)
 plt.subplot(2, 2, 3)
-plot_hist(img1_norm)
+plot_hist_rgb(img1_norm)
 
 plt.subplot(2, 2, 4)
-plot_hist(img2_norm)
+plot_hist_rgb(img2_norm)
 
 plt.show()
+
+
+
+
 #3行目
 # plt.subplot(4, 6, 13)
 # plt.imshow(img2_blue_c3)
