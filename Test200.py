@@ -9,6 +9,7 @@ from datetime import datetime
 CUR_DIR = 'D:\\data\\'
 
 
+
 class PointsChecker():
 
     ANGLE_LIMIT = 50
@@ -53,9 +54,9 @@ class PointsChecker():
             else:
                 return False
         else:                      #2回目以降のエラー
-            if (diff_distance > 10) or (diff_distance > 5 and diff_angle > PointsChecker.ANGLE_LIMIT):  #明らかな異常値の場合はエラーとする
+            if diff_distance < PointsChecker.DIST_LIMIT * 2 and diff_angle < PointsChecker.ANGLE_LIMIT:  #明らかな異常値の場合はエラーとする
                 self.temp_success_list.clear()
-                return True
+                return False
             else:                  #エラーからの復帰チェック
                 self.temp_success_list.append(index1)
                 if (len(self.temp_success_list)) >= 2:
@@ -98,24 +99,29 @@ class ImagePlot():
 
     def plot_img(self):
         for file_id in range(self.image_file_num):
-            plt.figure(figsize=(10,10))
-            plt.title('aaaaa', loc='center')
+            fig = plt.figure(figsize=(15,10))
+            plt.title(self.data_name + '_' + str(file_id))
+            plt.xticks(color="None")
+            plt.yticks(color="None")
+            plt.tick_params(length=0)
             for row in range(ImagePlot.ROW_SIZE):
                 index = ImagePlot.ROW_SIZE * file_id + row
-                self.show_img(index, row,  1)
-                self.show_img(index, row,  2)
-                self.show_img(index, row,  3)
-            plt.savefig(self.dir_path + self.data_name + '_' + str(file_id) + '..png')
+                self.show_img(fig, index, row,  1)
+                self.show_img(fig, index, row,  2)
+                self.show_img(fig, index, row,  3)
+            plt.savefig(self.dir_path + self.data_name + '_' + str(file_id) + '.png')
 
-    def show_img(self, index, row, col):
-        plt.subplot(ImagePlot.ROW_SIZE, ImagePlot.COL_SIZE, row * 3 + col)
+    def show_img(self, fig, index, row, col):
+        ax = fig.add_subplot(ImagePlot.ROW_SIZE, ImagePlot.COL_SIZE, row * 3 + col)
         try:
             image_id = self.error_id_list[index]
-            plt.title(image_id + (col - 2), loc='center')
+            #plt.subplots_adjust(left=0, right=1, bottom=0, top=1)
+            ax.set_title(image_id + (col - 2), loc='center')
             path = self.image_paths[image_id + (col - 2)]
             file_name = os.path.basename(path)
             plt.xticks(color="None")
             plt.yticks(color="None")
+            plt.tick_params(length=0)
             img = cv2.imread(CUR_DIR + file_name)
             plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
         except:
@@ -140,9 +146,7 @@ def get_ang_vectors(angles):
         angles_rad = angle * (math.pi / 180.0);
         ang_x = math.cos(angles_rad);
         ang_y = math.sin(angles_rad);
-        length = (ang_x*ang_x + ang_y*ang_y) ** 0.5
-        print (length)
-        ang_vec = np.array([ang_x/length, ang_y/length])
+        ang_vec = np.array([ang_x, ang_y])
         ang_vectors.append(ang_vec)
     return ang_vectors
 
@@ -180,21 +184,22 @@ def main(date_now, file_name):
             plt.scatter(x,y,c='blue')
 
     plt.plot(posi_vectors[:, 0],posi_vectors[:,1],color='green')
-    plt.show()
+    #plt.show()
 
-#     file_name, _ = os.path.splitext(file_name)
-#     dir_path = make_dir(plt, date_now, file_name)
-#     plt.savefig(dir_path + '\\figure.png')
-#     ImagePlot(dir_path, file_name, error_id_list, image_paths).plot_img()
+    file_name, _ = os.path.splitext(file_name)
+    dir_path = make_dir(plt, date_now, file_name)
+    plt.savefig(dir_path + '\\figure.png')
+    ImagePlot(dir_path, file_name, error_id_list, image_paths).plot_img()
 
 
 
 if __name__ == '__main__':
     date_now = datetime.now().strftime("%Y%m%d%H%M%S")
     main(date_now, FILE_NAME1)
-#     main(date_now, FILE_NAME2)
-#     main(date_now, FILE_NAME3)
-#     main(date_now, FILE_NAME4)
+    main(date_now, FILE_NAME2)
+    main(date_now, FILE_NAME3)
+    main(date_now, FILE_NAME4)
+    #main(date_now, FILE_NAME5)
     print ('finish!!!')
 
 
