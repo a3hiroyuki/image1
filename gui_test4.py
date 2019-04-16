@@ -10,6 +10,18 @@ import numpy as np
 
 CUR_DIR = 'C:\\aaa\\'
 
+
+def rotate_z(deg):
+    r = np.radians(deg)
+    C = np.cos(r)
+    S = np.sin(r)
+    R_z = np.matrix((
+        (C, -S, 0),
+        (S, C,  0),
+        (0, 0,  1)
+    ))
+    return R_z
+
 class PlotPoints():
     def __init__(self):
         self.no = 1000
@@ -71,10 +83,16 @@ class PlotPoints():
 class PlotPoint():
 
     def __init__(self, x, y, angle):
-        self.x = x
-        self.y = y
         self.angle = angle
         self.is_del = False
+        self.rotate_z(x, y)
+
+    def rotate_z(self, x, y):
+        a = np.array((x, y, 0))
+        Rz = rotate_z(-180)
+        b = np.dot(Rz, a)
+        print (b[0, 0])
+        self.x, self.y = b[0, 0], b[0, 1]
 
 class DraggablePlot(object):
 
