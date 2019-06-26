@@ -43,22 +43,23 @@ print (df)
 
 pp_arr = []
 for i in range(len(no_arr)):
-    pp = PlotPoint(no_arr[i], w * x_arr[i]/15, h * y_arr[i]/10, angles[i])
+    pp = PlotPoint(no_arr[i], x_arr[i], y_arr[i], angles[i])
     pp_arr.append(pp)
 
-plt.figure()
-plt.imshow(img)
+fig = plt.figure()
+ax = fig.add_subplot(1, 1, 1)
+
+#範囲設定
+ax.set_xlim(-20, 55)
+ax.invert_xaxis()
+ax.set_ylim(-5, 15)
+ax.invert_yaxis()
 
 for pp in pp_arr:
-    plt.quiver(pp.x, pp.y, pp.vector[0], pp.vector[1],angles='xy',scale_units='xy',scale=0.05, color=pp.get_color())
+    ax.quiver(pp.x, pp.y, pp.vector[0], pp.vector[1],angles='xy',scale_units='xy',scale=1.0, color=pp.get_color())
 
+xlim = ax.get_xlim()
+ylim = ax.get_ylim()
+ax.imshow(img, extent=[*xlim, *ylim], aspect='auto', alpha=1.0)
 
-# グラフ表示
-#plt.xlim([LEFT_BOTTOM[0],RIGHT_TOP[0]])
-#plt.ylim([LEFT_BOTTOM[1] ,RIGHT_TOP[1]])
-
-#ax.set_xticks(np.linspace(0, np.pi * 4, 5))
-#ax.set_yticks(np.linspace(-1, 1, 3))
-
-plt.draw()
 plt.show()
