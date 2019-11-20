@@ -3,12 +3,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import json
 import pandas as pd
+import math
 
 class CreatePlot:
-
+    lim = 10
     def __init__(self, A, O, B):
         fig = plt.figure()
         self.ax = fig.gca(projection='3d')
+        self.ax.set_xlim(-self.lim, self.lim)
+        self.ax.set_ylim(-self.lim, self.lim)
+        self.ax.set_zlim(-self.lim, self.lim)
         self.ax.set_xlabel("x")
         self.ax.set_ylabel("y")
         self.ax.set_zlabel("z")
@@ -56,14 +60,19 @@ class Transformation:
         bx, by, bz = b["trans"][0], b["trans"][1], b["trans"][2]
         cx, cy, cz = 0, 0, 0
         rx, ry, rz = b["rot"][0], b["rot"][1], b["rot"][2]
+        sx, sy, sz = b["scale"][0], b["scale"][1], b["scale"][2]
+        self.scale = np.array([sx, sy, sz])
         # T
         self.B = np.array([bx, by, bz])
         self.O = np.array([cx, cy, cz])
         self.rOB = self.B - self.O
         # R
-        rx = np.pi
-        ry = np.pi / 2
-        rz = np.pi / 3
+        # rx = np.pi
+        #         # ry = np.pi / 2
+        #         # rz = np.pi / 3
+        rx = math.radians(rx)
+        ry = math.radians(ry)
+        rz = math.radians(rz)
         p = np.array([rx, ry, rz])
         R = self.rotM(p)
         self.A = R.T
@@ -123,8 +132,12 @@ class Transformation:
         # R = Rz.dot(Ry).dot(Rx)
         return R
 
-    def conv1(self, sBP):
-        return self.rOB + np.dot(self.A , sBP)
+    def conv1(self, sBP, rot):
+        print (sBP)
+        temp1 = self.scale * sBP.T
+        temp2 = np.dot(self.A , temp1)
+        print (temp2)
+        return self.rOB + np.dot(self.A , temp2)
 
     def conv2(self, sBP):
         return np.dot(self.A , sBP)
@@ -132,44 +145,39 @@ class Transformation:
 class Points:
 
     def __init__(self):
-        data = pd.read_csv('bbb.csv')
-        print (data)
-        self.x_arr = data['x'].values.tolist()
-        self.y_arr = data['y'].values.tolist()
-        self.z_arr = data['z'].values.tolist()
-        self.number = len(self.z_arr)
+        df = pd.read_csv('bbb.csv')
+        df = df[df['type']  == 'tracking']
+        print (df)
+        self.x_arr = df['x'].values.tolist()
+        self.y_arr = df['y'].values.tolist()
+        self.z_arr = df['z'].values.tolist()
+        self.pitch = df['pitch'].values.tolist()
+        self.yaw = df['yaw'].values.tolist()
+        self.roll = df['roll'].values.tolist()
+        self.num = len(self.z_arr)
         self.i = 0
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        if self.i == self.number:
+        if self.i == self.num:
             raise StopIteration()
-        value = np.array([self.x_arr[self.i], self.y_arr[self.i], self.z_arr[self.i]])
+        value1 = np.array([self.x_arr[self.i], self.y_arr[self.i], self.z_arr[self.i]])
+        value2 = np.array([self.pitch[self.i], self.yaw[self.i], self.roll[self.i]])
         self.i += 1
-        return value
+        return value1, value2
 
 t = Transformation()
 points = Points()
 plot = CreatePlot(t.A, t.O, t.B)
 
-for sBP in points:
-    print (sBP)
-    plot.arrow(t.conv2(sBP), t.B, "r")
+for sBP, rot in points:
+    rBP = t.conv2(sBP. rot)
+    plot.arrow(rBP, t.B, "r")
     rOP = t.conv1(sBP)
-    print (rOP)
+    #print (rOP)
     plot.arrow(rOP, t.O, "b")
-
-
-#B = np.array([-2, -2, 1])
-#sP_B = np.array([1, 2, 3])
-
-# sP_O = np.dot(A, sP_B)
-# rB_O = B - O
-# rP_O = rB_O + sP_O
-
-
 
 plt.show()
 print ("aaa")
