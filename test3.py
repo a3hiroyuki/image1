@@ -10,7 +10,21 @@ def quaternion_to_euler(px,py,pz,pw):
     e = tf.transformations.euler_from_quaternion(px, py, pz, pw)
     return np.array([e[0], e[1], e[2]])
 
-class CreatePlot:
+class Create2DPlot:
+    def __init__(self, max_x, max_z, min_x, min_z):
+        fig = plt.figure()
+        self.ax = fig.add_subplot(1, 1, 1)
+        # 範囲設定
+        self.ax.set_xlim(min_x - 1, max_x + 1)
+        self.ax.invert_xaxis()
+        self.ax.set_ylim(min_z - 1, max_z + 1)
+        self.ax.invert_yaxis()
+
+    def plot(self, no, x, z):
+        self.ax.plot(x, z, marker="o")
+        self.ax.annotate(no, xy=(x, z))
+
+class Create3DPlot:
     lim = 5
     def __init__(self, A, O, T):
         fig = plt.figure()
@@ -100,11 +114,13 @@ class Transformation:
         return self.T + self.trans1(rL)
 
 class Points:
-    def __init__(self):
+    def __init__(self, transformation):
+        self.t = transformation
         columns = ["no","status","x","y","z","qx","qy","qz","qw"]
         df = pd.read_csv('ccc.csv', names=columns)
         df = df[df['status']  == 'tracking']
         print (df)
+        self.no_arr = df['no'].values.tolist()
         self.x_arr = df['x'].values.tolist()
         self.y_arr = df['y'].values.tolist()
         self.z_arr = df['z'].values.tolist()
@@ -121,25 +137,44 @@ class Points:
     def __next__(self):
         if self.i == self.num:
             raise StopIteration()
-        posi = np.array([self.x_arr[self.i], self.y_arr[self.i], self.z_arr[self.i]])
+        rL = np.array([self.x_arr[self.i], self.y_arr[self.i], self.z_arr[self.i]])
         #rot = quaternion_to_euler(self.qx_arr[self.i], self.qy_arr[self.i], self.qz_arr[self.i], self.qw_arr[self.i])
+        no = self.no_arr[self.i]
         rot = 0
         self.i += 1
-        return posi, rot
+        rLt, rW = self.t.trans1(rL), self.t.trans2(rL)
+        return no, rLt, rW
+
+    def check_max_min_range(self):
+        max_x, max_z = 0, 0
+        min_x, min_z = 9999, 9999
+        for _,_,rW in self:
+            if(max_x < rW[0]):
+                max_x = rW[0]
+            if(max_z < rW[2]):
+                max_z = rW[2]
+            if(min_x > rW[0]):
+                min_x = rW[0]
+            if (min_z > rW[2]):
+                min_z = rW[2]
+        self.i = 0
+        return max_x, max_z, min_x, min_z
 
 if __name__ == '__main__':
     t = Transformation()
-    points = Points()
-    plot = CreatePlot(t.A, t.O, t.T)
+    points = Points(t)
+    #plot3d = Create3DPlot(t.A, t.O, t.T)
+    max_x, max_z, min_x, min_z = points.check_max_min_range()
+    plot2d = Create2DPlot(max_x, max_z, min_x, min_z)
 
     i = 0
-    for rL, rot in points:
+    for no, rLt, rW in points:
         print(str(i) + ":")
-        print(rL)
-        plot.arrow(t.trans1(rL), t.T, "r")
-        rW = t.trans2(rL)
+        print(rLt)
         print (rW)
-        plot.arrow(rW, t.O, "b")
+        # plot3d.arrow(t.trans1(rL), t.T, "r")
+        #plot3d.arrow(rW, t.O, "b")
+        plot2d.plot(no, rW[0], rW[2])
         i = i + 1
 
     plt.show()
