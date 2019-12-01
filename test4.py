@@ -6,9 +6,18 @@ import pandas as pd
 import math
 import tf
 
-def quaternion_to_euler(px,py,pz,pw):
-    e = tf.transformations.euler_from_quaternion(px, py, pz, pw)
-    return np.array([e[0], e[1], e[2]])
+def quaternion_to_euler(x, y, z, w):
+    t0 = +2.0 * (w * x + y * z)
+    t1 = +1.0 - 2.0 * (x * x + y * y)
+    roll = math.atan2(t0, t1)
+    t2 = +2.0 * (w * y - z * x)
+    t2 = +1.0 if t2 > +1.0 else t2
+    t2 = -1.0 if t2 < -1.0 else t2
+    pitch = math.asin(t2)
+    t3 = +2.0 * (w * z + x * y)
+    t4 = +1.0 - 2.0 * (y * y + z * z)
+    yaw = math.atan2(t3, t4)
+    return [yaw, pitch, roll]
 
 class Create2DPlot:
     def __init__(self, max_x, max_z, min_x, min_z):
@@ -20,9 +29,12 @@ class Create2DPlot:
         self.ax.set_ylim(min_z - 1, max_z + 1)
         self.ax.invert_yaxis()
 
-    def plot(self, no, x, z):
+    def plot(self, no, x, z, rot_y):
         self.ax.plot(x, z, marker="o")
         self.ax.annotate(no, xy=(x, z))
+        vx = math.cos(rot_y)
+        vz = math.sin(rot_y)
+        self.ax.quiver(x, z, vx, vz,  angles='xy', scale_units='xy', scale=5.0)
 
 class Create3DPlot:
     lim = 5
@@ -138,17 +150,16 @@ class Points:
         if self.i == self.num:
             raise StopIteration()
         rL = np.array([self.x_arr[self.i], self.y_arr[self.i], self.z_arr[self.i]])
-        #rot = quaternion_to_euler(self.qx_arr[self.i], self.qy_arr[self.i], self.qz_arr[self.i], self.qw_arr[self.i])
+        rot = quaternion_to_euler(self.qx_arr[self.i], self.qy_arr[self.i], self.qz_arr[self.i], self.qw_arr[self.i])
         no = self.no_arr[self.i]
-        rot = 0
         self.i += 1
         rLt, rW = self.t.trans1(rL), self.t.trans2(rL)
-        return no, rLt, rW
+        return no, rLt, rW, rot
 
     def check_max_min_range(self):
         max_x, max_z = 0, 0
         min_x, min_z = 9999, 9999
-        for _,_,rW in self:
+        for _,_,rW,_ in self:
             if(max_x < rW[0]):
                 max_x = rW[0]
             if(max_z < rW[2]):
@@ -167,14 +178,16 @@ if __name__ == '__main__':
     max_x, max_z, min_x, min_z = points.check_max_min_range()
     plot2d = Create2DPlot(max_x, max_z, min_x, min_z)
 
+
     i = 0
-    for no, rLt, rW in points:
-        print(str(i) + ":")
+    for no, rLt, rW, rot in points:
+        print(str(i) + ":" + str(no))
         print(rLt)
         print (rW)
+        print (rot)
         # plot3d.arrow(t.trans1(rL), t.T, "r")
         #plot3d.arrow(rW, t.O, "b")
-        plot2d.plot(no, rW[0], rW[2])
+        plot2d.plot(no, rW[0], rW[2], rot[1])
         i = i + 1
 
     plt.show()
