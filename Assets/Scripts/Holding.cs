@@ -5,21 +5,23 @@ using UnityEngine;
 public class Holding : MonoBehaviour
 {
 
-    public bool holding = false;
+    //public bool holding = false;
     public bool finish = false;
+    private BlockBase2 mBlockBaseScript;
 
     void Start()
    {
-       holding = false;
+        mBlockBaseScript = transform.parent.gameObject.GetComponent<BlockBase2>();
    }
 
    void Update()
    {
         if (finish) return;
 
-        if (holding)
+        if (mBlockBaseScript.IsHolding())
         {
-            Move();
+            Ray ray = Camera.main.ScreenPointToRay(Input.GetTouch(0).position);
+            mBlockBaseScript.Move(ray);
         }
 
         // One finger
@@ -35,7 +37,7 @@ public class Holding : MonoBehaviour
                 {
                     if (hit.transform == transform)
                     {
-                        holding = true;
+                        mBlockBaseScript.SetHolding(true);
                     }
                 }
             }
@@ -43,18 +45,8 @@ public class Holding : MonoBehaviour
             // Release
             if (Input.GetTouch(0).phase == TouchPhase.Ended)
             {
-                holding = false;
+                mBlockBaseScript.SetHolding(false);
             }
-        }
-    }
-
-    void Move()
-    {
-        RaycastHit hit;
-        Ray ray = Camera.main.ScreenPointToRay(Input.GetTouch(0).position);
-        if (Physics.Raycast(ray, out hit, 100.0f))
-        {
-            transform.position = new Vector3(hit.point.x, transform.position.y, hit.point.z);
         }
     }
 

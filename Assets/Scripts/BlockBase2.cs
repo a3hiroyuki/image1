@@ -12,11 +12,8 @@ public class BlockBase2 : MonoBehaviour {
 
     private int currentDegree = 0;
     private int targetDegree = 0;
-    public bool IsInTeritory2;
+    private bool mIsHoding;
     public Vector3 mRotateCenter;
-
-    
-
 
     // create all cubes
     public void createCubes() {
@@ -30,14 +27,14 @@ public class BlockBase2 : MonoBehaviour {
 
         cubes = new GameObject[4 * 4 * 1 + 1];
 
-
         for (int i = 0; i < 1; i++) {
 		    for (int j = 0; j < 4; j++) {
 			    for (int k = 0; k < 4; k++) {
 				    if (block.block[i, j, k] != 0) {
                         // create cube
 					    GameObject newCube = Instantiate(cubePrefab);
-				    	newCube.transform.SetParent(blockObject.transform);
+                        newCube.tag = "tetris";
+                        newCube.transform.SetParent(blockObject.transform);
                         //newCube.transform.localScale = new Vector3(General.cubeSize, General.cubeSize, General.cubeSize);
                         newCube.transform.localPosition = new Vector3(k * General.cubeSize, j * General.cubeSize, i * General.cubeSize);
                         cubes[block.block[i, j, k]] = newCube;
@@ -57,7 +54,6 @@ public class BlockBase2 : MonoBehaviour {
             tempX -= xMin * General.cubeSize;
         }
         x = (int)(tempX / General.cubeSize);
-        Debug.Log("abeabe3：" + x);
         y = (int)(v.y/General.cubeSize);
         z = 0;
     }
@@ -100,7 +96,6 @@ public class BlockBase2 : MonoBehaviour {
             }
         }
     }
-
 
     // rotation
     public void rotateRight() {
@@ -170,25 +165,44 @@ public class BlockBase2 : MonoBehaviour {
             targetDegree = 0;
             currentDegree = 0;
         }
-        if (IsInTeritory())
+
+        if (!IsInTeritory())
         {
-            IsInTeritory2 = true;
-        }
-        else
-        {
-            IsInTeritory2 = false;
             if (IsHolding())
             {
-                ChangeColor(Color.black);
+                ChangeColors(Color.magenta);
             }
             else
             {
-                ChangeColor(Color.cyan);
+                ChangeColors(Color.cyan);
             }
         }
     }
 
-    private bool IsInTeritory()
+    public bool IsCollisionCube()
+    {
+        for (int i = 0; i < 1; i++)
+        {
+            for (int j = 0; j < block.size; j++)
+            {
+                for (int k = 0; k < block.size; k++)
+                {
+                    if (block.block[i, j, k] != 0)
+                    {
+                        GameObject cube = cubes[block.block[i, j, k]];
+                        TetrisCubeScript cSprict = (TetrisCubeScript)cube.GetComponent(typeof(TetrisCubeScript));
+                        if (cSprict.IsCubeCollision)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public bool IsInTeritory()
     {
         int count = 0;
         for (int i = 0; i < 1; i++)
@@ -200,13 +214,12 @@ public class BlockBase2 : MonoBehaviour {
                     if (block.block[i, j, k] != 0)
                     {
                         GameObject cube = cubes[block.block[i, j, k]];
-                        Cube cSprict  = (Cube)cube.GetComponent(typeof(Cube));
-                        if (cSprict.IsCollision)
+                        TetrisCubeScript cSprict  = (TetrisCubeScript)cube.GetComponent(typeof(TetrisCubeScript));
+                        if (cSprict.IsEnterTetrisArea)
                         {
                             count++;
                         }
-
-                    };
+                    }
                 }
             }
         }
@@ -220,12 +233,45 @@ public class BlockBase2 : MonoBehaviour {
         }
     }
 
-    public bool IsHolding()
+    public void SetHolding(bool isHolding)
     {
-        return GetComponent<Holding>().holding;
+        mIsHoding = isHolding;
     }
 
-    private void ChangeColor(Color color)
+    public bool IsHolding()
+    {
+        return mIsHoding;
+    }
+
+    public void Move(Ray ray)
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(ray, out hit, 100.0f))
+        {
+            transform.position = new Vector3(hit.point.x, transform.position.y, hit.point.z);
+        }
+    }
+
+    public void FinishDrag()
+    {
+        for (int i = 0; i < 1; i++)
+        {
+            for (int j = 0; j < block.size; j++)
+            {
+                for (int k = 0; k < block.size; k++)
+                {
+                    if (block.block[i, j, k] != 0)
+                    {
+                        GameObject cube = cubes[block.block[i, j, k]];
+                        Holding cSprict = (Holding)cube.GetComponent(typeof(Holding));
+                        cSprict.finish = true;
+                    }
+                }
+            }
+        }
+    }
+
+    private void ChangeColors(Color color)
     {
         for (int i = 0; i < 1; i++)
         {
@@ -237,8 +283,7 @@ public class BlockBase2 : MonoBehaviour {
                     {
                         GameObject cube = cubes[block.block[i, j, k]];
                         cube.GetComponent<Renderer>().material.color = color;
-
-                    };
+                    }
                 }
             }
         }

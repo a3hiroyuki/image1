@@ -3,19 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Main : MonoBehaviour {
-    // prefabs
-    public GameObject blockPrefab;
 
     // block data
-    public static General.Block[] blocks;
+    //public static General.Block[] blocks;
     public GameObject FinishedCube;
-    public GameObject GameArea;
     public GameObject BasePlane;
     public GameObject TetrisArea;
 
     // array for all cubes that are fixed
     private GameObject[,,] space = new GameObject[2, General.length+4, General.height + 4];
-
     private float timeForNextCheck;
     private bool isMoving = false;
     private float timeForMovingAni;
@@ -24,7 +20,7 @@ public class Main : MonoBehaviour {
     private List<GameObject> mTetrisList = new List<GameObject>();
 
     void Start() {
-        blocks = General.generateBlockTemplate();
+        //blocks = General.generateBlockTemplate();
     }
 
     public void GameStart()
@@ -37,52 +33,6 @@ public class Main : MonoBehaviour {
         TetrisArea.transform.localScale = new Vector3(General.FULL_LENGTH, General.cubeSize * General.height, 0.3f);
     }
 
-    /*
-// add next block to the scene
-void addNextBlock() {
-
-    // create block
-    currentBlockObject = createBlock(this.gameObject, blocks[nextBlockId], nextBlockColourId);
-    currentScript = (BlockBase2)currentBlockObject.GetComponent(typeof(BlockBase));
-
-    // random pos
-    currentScript.x = Random.Range(currentScript.xMin, currentScript.xMax + 1);
-
-    if (!isMovePossible(currentScript.block.block, 0, 0, 1)) {
-        if (Random.Range(0, 2) == 1) {
-            currentScript.z += 1;
-        }
-    }
-    currentScript.y = General.height;
-
-    // fix position
-    currentScript.fixPositionZ();
-    currentScript.fixPositionX();
-    currentScript.fixPositionY();
-
-
-    CreateHintBoxes();
-
-    // reset timer
-    currentTimeForEachDrop = General.timeForEachDrop;
-    timeForNextCheck = currentTimeForEachDrop;
-    timeForMovingAni = -1;
-
-    isMoving = true;
-    if (currentNextBlockObject != null) {
-        Destroy(currentNextBlockObject);
-    }
-
-    // random pick next block
-    nextBlockId = Random.Range(0, blocks.Length);
-    nextBlockColourId = Random.Range(0, colours.Length);
-    currentNextBlockObject = createBlock(this.gameObject, blocks[nextBlockId], nextBlockColourId);
-    currentNextBlockObject.transform.parent = NextBlock.transform;
-    currentNextBlockObject.transform.localPosition = new Vector3(0, 0, 0);
-
-}
-**/
-
     public void AddNextBlock2(GameObject currentBlockObject)
     {
         Vector3 localPosi = transform.InverseTransformPoint(currentBlockObject.transform.position);
@@ -92,14 +42,12 @@ void addNextBlock() {
         currentBlockObject.transform.localPosition = localPosi;
         currentBlockObject.transform.forward = transform.forward;
         currentScript.SetXYZ(localPosi);
+        currentScript.FinishDrag();
 
         // fix position
         currentScript.fixPositionZ();
         currentScript.fixPositionX();
         currentScript.fixPositionY();
-
-        Holding holding = (Holding)currentBlockObject.GetComponent(typeof(Holding));
-        holding.finish = true;
 
         isMoving = true;
 
@@ -173,7 +121,7 @@ void addNextBlock() {
                     }
                     else
                     {
-                        space[i, j, k].GetComponent<Cube>().SetColor();
+                        space[i, j, k].GetComponent<TetrisCubeScript>().SetColor();
                     }
                 }
                 if (!rowFlag) break;
@@ -246,10 +194,6 @@ void addNextBlock() {
         return false;
     }
 
-    public bool GameOver() {
-        return isGameOver;
-    }
-
     // swap two variables
     static void Swap<T>(ref T x, ref T y) {
         T t = y;
@@ -262,7 +206,6 @@ void addNextBlock() {
 
         // GameOver panel
         if (isGameOver) {
-            //canvas.transform.Find("GameOverPanel").gameObject.SetActive(true);
             return;
         }
 

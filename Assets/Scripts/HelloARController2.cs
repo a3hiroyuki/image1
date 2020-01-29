@@ -69,11 +69,11 @@ public class HelloARController2 : MonoBehaviour
 
 
     //add
+    public static General.Block[] blocks;
     public GameObject GameArea;
     public GameObject PlaneGenerator;
     public GameObject TetrisPrefab;
-    private bool IsFirst = true;
-    private General.Block[] blocks;
+    private bool IsFirst = true; 
     private Anchor mAnchor;
     private Vector3 mTetrisDispPosi;
     private List<GameObject> mTetrisList;
@@ -92,7 +92,10 @@ public class HelloARController2 : MonoBehaviour
 
     public void TimeOver()
     {
-        CreateTetris();
+        if (mTetrisList.Count < 3)
+        {
+            CreateTetris();
+        }
     }
 
     public void Update()
@@ -107,7 +110,7 @@ public class HelloARController2 : MonoBehaviour
                 {
                     CheckInput(tetris);
                 }
-                if (currentScript.IsInTeritory2 && !currentScript.IsHolding())
+                if (currentScript.IsInTeritory() && !currentScript.IsCollisionCube() && !currentScript.IsHolding())
                 {
                     Debug.Log("xxxx");
                     Main script = (Main)GameArea.GetComponent(typeof(Main));
@@ -230,7 +233,6 @@ public class HelloARController2 : MonoBehaviour
         {
             tetris_block.GetComponent<BlockBase2>().rotateLeft();
         }
-            
         GetComponent<TetorisInput>().InitButton();
     }
 
